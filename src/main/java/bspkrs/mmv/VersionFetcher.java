@@ -29,15 +29,15 @@ import com.google.gson.Gson;
 
 public class VersionFetcher
 {
-    private final String jsonUrl = "http://export.mcpbot.bspk.rs/versions.json";
+    private final String[] jsonUrl = {"http://export.mcpbot.bspk.rs/versions.json", "http://mirror.kaaass.net/mcp/versions.json"};
     private List<String> versions;
 
     @SuppressWarnings("unchecked")
-    public List<String> getVersions(boolean force) throws IOException
+    public List<String> getVersions(boolean force, boolean useMirror) throws IOException
     {
         if ((versions == null) || force)
         {
-            final URL url = new URL(jsonUrl);
+            final URL url = new URL(jsonUrl[useMirror ? 1 : 0]);
             final URLConnection connection = url.openConnection();
             connection.addRequestProperty("User-Agent", "MMV/1.0.0");
             BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));

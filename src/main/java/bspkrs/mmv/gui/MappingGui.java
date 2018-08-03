@@ -95,6 +95,7 @@ public class MappingGui extends JFrame
     private JButton                             btnRefreshTables;
     private JComboBox<String>                   cmbMappingVersion;
     private JCheckBox                           chkForceRefresh;
+    private JCheckBox                           chkUseMirror;
     private JPanel                              pnlProgress;
     private JProgressBar                        progressBar;
     private JPanel                              pnlFilter;
@@ -124,7 +125,7 @@ public class MappingGui extends JFrame
     private final String                        mcfTopic              = "http://www.minecraftforum.net/topic/2115030-";
 
     // @formatter:off
-    public static DefaultTableModel classesDefaultModel = new DefaultTableModel(new Object[][] { {}, }, new String[] { "Pkg name", "SRG name", "Obf name" })
+    public static DefaultTableModel classesDefaultModel = new DefaultTableModel(new Object[][] { {}, }, new String[] { "包名", "SRG名", "混淆名" })
     {
         private static final long serialVersionUID = 1L;
         boolean[]                 columnEditables  = new boolean[] { false, false, false };
@@ -139,7 +140,7 @@ public class MappingGui extends JFrame
         public boolean isCellEditable(int row, int column) { return columnEditables[column]; }
     };
 
-    public static DefaultTableModel methodsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP Name", "SRG Name", "Obf Name", "SRG Descriptor", "Comment" })
+    public static DefaultTableModel methodsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP名", "SRG名", "混淆名", "SRG描述符", "注释" })
     {
         private static final long serialVersionUID = 1L;
         boolean[]                 columnEditables  = new boolean[] { false, false, false, false, false };
@@ -154,7 +155,7 @@ public class MappingGui extends JFrame
         public boolean isCellEditable(int row, int column) { return columnEditables[column]; }
     };
 
-    public static DefaultTableModel paramsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP Name", "SRG Name", "Type" })
+    public static DefaultTableModel paramsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP名", "SRG名", "类型" })
     {
         private static final long serialVersionUID = 1L;
         boolean[]                 columnEditables  = new boolean[] { false, false, false };
@@ -169,7 +170,7 @@ public class MappingGui extends JFrame
         public boolean isCellEditable(int row, int column) { return columnEditables[column]; }
     };
 
-    public static DefaultTableModel fieldsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP Name", "SRG Name", "Obf Name", "Comment" } )
+    public static DefaultTableModel fieldsDefaultModel = new DefaultTableModel( new Object[][] { {}, }, new String[] { "MCP名", "SRG名", "混淆名", "注释" } )
     {
         private static final long serialVersionUID = 1L;
         boolean[]                 columnEditables  = new boolean[] { false, false, false, false };
@@ -279,14 +280,14 @@ public class MappingGui extends JFrame
 
     private void checkForUpdates()
     {
-        versionChecker = new AppVersionChecker("MCP Mapping Viewer", VERSION_NUMBER, versionURL, mcfTopic,
-                new String[] { "{appName} {oldVer} is out of date! Visit {updateURL} to download the latest release ({newVer})." },
+        versionChecker = new AppVersionChecker("MCP Mapping 查看器", VERSION_NUMBER, versionURL, mcfTopic,
+                new String[] { "{appName} 的版本 {oldVer} 已经过时了! 访问 {updateURL} 以下载最新版本（{newVer}）。" },
                 new String[] {
-                        "{appName} {oldVer} is out of date! <br/><br/>Download the latest release ({newVer}) from <a href=\"{updateURL}\">{updateURL}</a>." },
+                        "{appName} 的版本 {oldVer} 已经过时了! <br/><br/>访问 <a href=\"{updateURL}\">{updateURL}</a> 以下载最新版本（{newVer}）。" },
                 5000);
         if (!versionChecker.isCurrentVersion())
         {
-            showHTMLDialog(MappingGui.this, versionChecker.getDialogMessage()[0], "An update is available", JOptionPane.INFORMATION_MESSAGE);
+            showHTMLDialog(MappingGui.this, versionChecker.getDialogMessage()[0], "有新的版本", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -390,8 +391,8 @@ public class MappingGui extends JFrame
                 savePrefs();
             }
         });
-        frmMcpMappingViewer.setTitle("MCP Mapping Viewer");
-        frmMcpMappingViewer.setBounds(100, 100, 925, 621);
+        frmMcpMappingViewer.setTitle("MCP Mapping 查看器");
+        frmMcpMappingViewer.setBounds(100, 100, 950, 621);
         frmMcpMappingViewer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frmMcpMappingViewer.getContentPane().setLayout(new BorderLayout(0, 0));
 
@@ -496,11 +497,11 @@ public class MappingGui extends JFrame
         cmbMappingVersion.setPreferredSize(new Dimension(320, 20));
         cmbMappingVersion.addItemListener(new MappingVersionsComboItemChanged());
 
-        JLabel lblMappingVersion = new JLabel("Mapping Version");
+        JLabel lblMappingVersion = new JLabel("Mapping 版本");
         pnlControls.add(lblMappingVersion);
         pnlControls.add(cmbMappingVersion);
 
-        btnGetVersions = new JButton("Get Versions");
+        btnGetVersions = new JButton("获取版本列表");
         btnGetVersions.addActionListener(new ActionListener()
         {
             @Override
@@ -509,7 +510,7 @@ public class MappingGui extends JFrame
                 try
                 {
                     cmbMappingVersion.removeAllItems();
-                    for (String s : versionFetcher.getVersions(chkForceRefresh.isSelected()))
+                    for (String s : versionFetcher.getVersions(chkForceRefresh.isSelected(), chkUseMirror.isSelected()))
                     {
                         cmbMappingVersion.addItem(s);
                     }
@@ -520,14 +521,18 @@ public class MappingGui extends JFrame
         });
         pnlControls.add(btnGetVersions);
 
-        btnRefreshTables = new JButton("Load Mappings");
+        btnRefreshTables = new JButton("加载 Mappings");
         btnRefreshTables.setEnabled(false);
         btnRefreshTables.addActionListener(new RefreshActionListener());
         pnlControls.add(btnRefreshTables);
 
-        chkForceRefresh = new JCheckBox("Force reload");
-        chkForceRefresh.setToolTipText("Force a reload from the MCP conf folder files instead of the session cache.");
+        chkForceRefresh = new JCheckBox("强制重载");
+        chkForceRefresh.setToolTipText("不使用缓存，强制重新下载");
         pnlControls.add(chkForceRefresh);
+
+        chkUseMirror = new JCheckBox("使用镜像服务器", true);
+        chkUseMirror.setToolTipText("可以加速读取，由KAAAsS维护，国内建议勾选");
+        pnlControls.add(chkUseMirror);
 
         pnlProgress = new JPanel();
         pnlProgress.setVisible(false);
@@ -547,7 +552,7 @@ public class MappingGui extends JFrame
         pnlFilter.setVisible(true);
         pnlHeader.add(pnlFilter, BorderLayout.CENTER);
 
-        JLabel lblFilter = new JLabel("Search");
+        JLabel lblFilter = new JLabel("搜索");
         pnlFilter.add(lblFilter);
 
         cmbFilter = new JComboBox<String>();
@@ -556,7 +561,7 @@ public class MappingGui extends JFrame
         cmbFilter.setMaximumRowCount(10);
         pnlFilter.add(cmbFilter);
 
-        btnSearch = new JButton("Go");
+        btnSearch = new JButton("🔍");
         btnSearch.setToolTipText("");
         btnSearch.addActionListener(new SearchActionListener());
         pnlFilter.add(btnSearch);
@@ -581,18 +586,18 @@ public class MappingGui extends JFrame
         });
         btnSearch.setEnabled(false);
 
-        JLabel lblSearchInfo = new JLabel("A note on search");
+        JLabel lblSearchInfo = new JLabel("注意事项");
         lblSearchInfo.addMouseListener(new MouseAdapter()
         {
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                String message = "Search is global and returns a set of classes that contain a match for the input. \n" +
-                        "Search is case sensitive!\n\nData elements searched on:\n" +
-                        "Classes:\n    ~ Pkg Name\n    ~ SRG Name\n    ~ Obf Name\n" +
-                        "Methods/Fields:\n    ~ SRG Name\n    ~ Obf Name\n    ~ MCP Name\n    ~ Comment\n\n" +
-                        "Parameters are not currently searchable.";
-                JOptionPane.showMessageDialog(MappingGui.this, message, "Search Info", JOptionPane.INFORMATION_MESSAGE);
+                String message = "搜索功能是全局的，并且会返回所有包含匹配输入的类。 \n" +
+                        "搜索是大小写敏感的！\n\n可搜索的数据：\n" +
+                        "类:\n    ~ 包名\n    ~ SRG名\n    ~ 混淆名\n" +
+                        "方法/字段:\n    ~ SRG名\n    ~ 混淆名\n    ~ MCP名\n    ~ 注释\n\n" +
+                        "参数尚不能被搜索。";
+                JOptionPane.showMessageDialog(MappingGui.this, message, "搜索信息", JOptionPane.INFORMATION_MESSAGE);
             }
         });
         lblSearchInfo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -604,7 +609,7 @@ public class MappingGui extends JFrame
         separator.setOrientation(SwingConstants.VERTICAL);
         pnlFilter.add(separator);
 
-        JLabel lblAbout = new JLabel("About");
+        JLabel lblAbout = new JLabel("关于");
         pnlFilter.add(lblAbout);
         lblAbout.setForeground(Color.BLUE);
         lblAbout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -614,8 +619,8 @@ public class MappingGui extends JFrame
         separator_1.setOrientation(SwingConstants.VERTICAL);
         pnlFilter.add(separator_1);
 
-        btnGetBotCommands = new JButton("Get Command List");
-        btnGetBotCommands.setToolTipText("Exports to the system clipboard a listing of MCPBot commands for any edits you have made in the GUI.");
+        btnGetBotCommands = new JButton("复制命令列表");
+        btnGetBotCommands.setToolTipText("将你在GUI进行的编辑动作以MCPBot指令导出至系统剪切板");
         btnGetBotCommands.setEnabled(false);
         btnGetBotCommands.addActionListener(new ActionListener()
         {
@@ -626,22 +631,22 @@ public class MappingGui extends JFrame
                 if (commands != null && !commands.isEmpty())
                 {
                     Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(commands), null);
-                    JOptionPane.showMessageDialog(MappingGui.this, "Commands copied to clipboard: \n" + commands, "MMV - MCPBot Commands",
+                    JOptionPane.showMessageDialog(MappingGui.this, "命令已复制到剪切板: \n" + commands, "MMV - MCPBot命令",
                             JOptionPane.INFORMATION_MESSAGE);
 
                     if (chkClearOnCopy.isSelected())
                         btnGetBotCommands.setEnabled(false);
                 }
                 else
-                    JOptionPane.showMessageDialog(MappingGui.this, "No commands to copy.", "MMV - MCPBot Commands", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(MappingGui.this, "没有可复制的命令", "MMV - MCPBot命令", JOptionPane.INFORMATION_MESSAGE);
 
                 chkClearOnCopy.setSelected(false);
             }
         });
         pnlFilter.add(btnGetBotCommands);
 
-        chkClearOnCopy = new JCheckBox("Clear");
-        chkClearOnCopy.setToolTipText("Whether or not to clear the MCPBot command list when the button is clicked.");
+        chkClearOnCopy = new JCheckBox("清除");
+        chkClearOnCopy.setToolTipText("是否在点击按钮后清除MCPBot命令列表");
         pnlFilter.add(chkClearOnCopy);
 
         lblAbout.addMouseListener(new MouseAdapter()
@@ -653,20 +658,22 @@ public class MappingGui extends JFrame
                 String imgsrc = MappingGui.class.getResource("/bspkrs/mmv/gui/icon/bspkrs.png").toString();
                 String year = new SimpleDateFormat("yyyy").format(new Date());
                 String message = "<center><img src=\"" + imgsrc + "\"/><br/>" +
-                        "MCP Mapping Viewer v" + VERSION_NUMBER + "<br/>" +
+                        "MCP Mapping 查看器 v" + VERSION_NUMBER + "<br/>" +
                         "Copyright (C) 2013-" + year + " bspkrs<br/>" +
                         "Portions Copyright (C) 2013 Alex \"immibis\" Campbell<br/><br/>" +
-                        "Author: bspkrs<br/>" +
+                        "作者: bspkrs<br/>" +
+                        "汉化&Mirror: KAAAsS<br/>" +
                         "Credits: immibis (for <a href=\"https://github.com/immibis/bearded-octo-nemesis\">BON</a> code), " +
                         "Searge et al (for <a href=\"http://mcp.ocean-labs.de\">MCP</a>)<br/><br/>" +
-                        "<a href=\"" + mcfTopic + "\">MCF Thread</a><br/>" +
-                        "<a href=\"https://github.com/bspkrs/MCPMappingViewer\">Github Repo</a><br/>" +
-                        "<a href=\"https://github.com/bspkrs/MCPMappingViewer/blob/master/change.log\">Change Log</a><br/>" +
-                        "<a href=\"http://bspk.rs/MC/MCPMappingViewer/index.html\">Binary Downloads</a><br/>" +
-                        "<a href=\"https://raw.githubusercontent.com/bspkrs/MCPMappingViewer/master/LICENSE\">License</a><br/>" +
+                        "<a href=\"" + mcfTopic + "\">MCF原发布帖</a><br/>" +
+                        "<a href=\"https://github.com/kaaass/MCPMappingViewer_CN\">Github仓库</a><br/>" +
+                        "<a href=\"https://github.com/kaaass/MCPMappingViewer_CN/blob/master/change.log\">变更日志</a><br/>" +
+                        "<a href=\"http://bspk.rs/MC/MCPMappingViewer/index.html\">编译版下载</a><br/>" +
+                        "<a href=\"https://raw.githubusercontent.com/kaaass/MCPMappingViewer_CN/master/LICENSE\">License</a><br/>" +
                         "<a href=\"https://raw.githubusercontent.com/google/gson/master/LICENSE\">GSON License</a><br/>" +
-                        "<a href=\"https://twitter.com/bspkrs\">bspkrs on Twitter</a></center>";
-                showHTMLDialog(MappingGui.this, message, "About MCP Mapping Viewer", JOptionPane.PLAIN_MESSAGE);
+                        "<a href=\"https://twitter.com/bspkrs\">bspkrs的Twitter</a><br/>" +
+                        "<a href=\"https://kaaass.net\">KAAAsS的主页</a></center>";
+                showHTMLDialog(MappingGui.this, message, "关于 MCP Mapping 查看器", JOptionPane.PLAIN_MESSAGE);
             }
         });
 
@@ -929,7 +936,7 @@ public class MappingGui extends JFrame
                             }
                         };
 
-                        progress.start(0, "Searching MCP objects for input");
+                        progress.start(0, "正在搜索与输入内容匹配的MCP对象");
                         tblClasses.setModel(currentLoader.getSearchResults(cmbFilter.getSelectedItem().toString(), progress));
                         tblClasses.setEnabled(true);
                         new TableColumnAdjuster(tblClasses).adjustColumns();
@@ -1149,8 +1156,8 @@ public class MappingGui extends JFrame
 
                         if (!mcpInstances.containsKey(mappingVersion) || chkForceRefresh.isSelected())
                         {
-                            progress.start(0, "Reading MCP configuration");
-                            currentLoader = new McpMappingLoader(MappingGui.this, mappingVersion, progress);
+                            progress.start(0, "读取 MCP 配置");
+                            currentLoader = new McpMappingLoader(MappingGui.this, mappingVersion, progress, chkUseMirror.isSelected());
                             mcpInstances.put(mappingVersion, currentLoader);
                             chkForceRefresh.setSelected(false);
                         }

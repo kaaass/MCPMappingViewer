@@ -51,8 +51,10 @@ public class McpMappingLoader
     private final File                                   baseDir                 = new File(new File(System.getProperty("user.home")), ".cache/MCPMappingViewer");
     private final String                                 baseSrgDir              = "{mc_ver}";
     private final String                                 baseMappingDir          = "{mc_ver}/{channel}_{map_ver}";
-    private final String                                 baseMappingUrl          = "http://export.mcpbot.bspk.rs/mcp_{channel}/{map_ver}-{mc_ver}/mcp_{channel}-{map_ver}-{mc_ver}.zip";
-    private final String                                 baseSrgUrl              = "http://export.mcpbot.bspk.rs/mcp/{mc_ver}/mcp-{mc_ver}-srg.zip";
+    private final String[]                               baseMappingUrl          = {"http://export.mcpbot.bspk.rs/mcp_{channel}/{map_ver}-{mc_ver}/mcp_{channel}-{map_ver}-{mc_ver}.zip",
+                                                                                    "http://mirror.kaaass.net/mcp/mapping/{channel}/{map_ver}-{mc_ver}/mcp_{channel}-{map_ver}-{mc_ver}.zip"};
+    private final String[]                               baseSrgUrl              = {"http://export.mcpbot.bspk.rs/mcp/{mc_ver}/mcp-{mc_ver}-srg.zip",
+                                                                                    "http://mirror.kaaass.net/mcp/srg/{mc_ver}/mcp-{mc_ver}-srg.zip"};
 
     private final File                                   srgDir;
     private final File                                   mappingDir;
@@ -70,7 +72,7 @@ public class McpMappingLoader
     public final Map<FieldSrgData, CsvData>              srgFieldData2CsvData    = new TreeMap<FieldSrgData, CsvData>();
     public final Map<ExcData, Map<String, ParamCsvData>> excData2MapParamCsvData = new TreeMap<ExcData, Map<String, ParamCsvData>>();
 
-    public McpMappingLoader(MappingGui parentGui, String mappingString, IProgressListener progress) throws IOException, CantLoadMCPMappingException, NoSuchAlgorithmException, DigestException
+    public McpMappingLoader(MappingGui parentGui, String mappingString, IProgressListener progress, boolean useMirror) throws IOException, CantLoadMCPMappingException, NoSuchAlgorithmException, DigestException
     {
         progress.setMax(6);
         progress.set(0);
@@ -81,10 +83,10 @@ public class McpMappingLoader
         if (tokens.length < 3)
             throw new CantLoadMCPMappingException("Invalid mapping string specified.");
 
-        progress.set(0, "Fetching SRG data");
-        srgDir = getSubDirForZip(tokens, baseSrgUrl, baseSrgDir);
-        progress.set(1, "Fetching CSV data");
-        mappingDir = getSubDirForZip(tokens, baseMappingUrl, baseMappingDir);
+        progress.set(0, "正在获取SRG数据");
+        srgDir = getSubDirForZip(tokens, baseSrgUrl[useMirror ? 1 : 0], baseSrgDir);
+        progress.set(1, "正在获取CSV数据");
+        mappingDir = getSubDirForZip(tokens, baseMappingUrl[useMirror ? 1 : 0], baseMappingDir);
 
         srgFile = new File(srgDir, "joined.srg");
         excFile = new File(srgDir, "joined.exc");
@@ -99,13 +101,13 @@ public class McpMappingLoader
         if (!staticMethodsFile.exists())
             throw new CantLoadMCPMappingException("Unable to find static_methods.txt. Your MCP conf folder may be corrupt.");
 
-        progress.set(2, "Loading CSV data");
+        progress.set(2, "正在载入CSV数据");
         loadCsvMapping();
-        progress.set(3, "Loading SRG data");
+        progress.set(3, "正在载入SRG数据");
         loadSrgMapping();
-        progress.set(4, "Linking SRG data with CSV data");
+        progress.set(4, "正在链接SRG数据至CSV数据");
         linkSrgDataToCsvData();
-        progress.set(5, "Linking EXC data with CSV data");
+        progress.set(5, "正在链接EXC数据至CSV数据");
         linkExcDataToSetParamCsvData();
     }
 
@@ -324,7 +326,7 @@ public class McpMappingLoader
     public class ClassModel extends AbstractTableModel
     {
         private static final long              serialVersionUID = 1L;
-        public final String[]                  columnNames      = { "Pkg name", "SRG name", "Obf name" };
+        public final String[]                  columnNames      = { "包名", "SRG名", "混淆名" };
         private final Class[]                  columnTypes      = { String.class, String.class, String.class };
         private final boolean[]                isColumnEditable = { false, false, false };
         private final Object[][]               data;
@@ -397,7 +399,7 @@ public class McpMappingLoader
     public class MethodModel extends AbstractTableModel
     {
         private static final long        serialVersionUID = 1L;
-        private final String[]           columnNames      = { "MCP Name", "SRG Name", "Obf Name", "SRG Descriptor", "Comment" };
+        private final String[]           columnNames      = { "MCP名", "SRG名", "混淆名", "SRG描述符", "注释" };
         private final Class[]            columnTypes      = { String.class, String.class, String.class, String.class, String.class };
         private final boolean[]          isColumnEditable = { true, false, false, false, true };
         private final Object[][]         data;
@@ -507,7 +509,7 @@ public class McpMappingLoader
     public class ParamModel extends AbstractTableModel
     {
         private static final long serialVersionUID = 1L;
-        private final String[]    columnNames      = { "MCP Name", "SRG Name", "Type" };
+        private final String[]    columnNames      = { "MCP名", "SRG名", "类型" };
         private final Class[]     columnTypes      = { String.class, String.class, String.class };
         private final boolean[]   isColumnEditable = { true, false, false };
         private final Object[][]  data;
@@ -614,7 +616,7 @@ public class McpMappingLoader
     public class FieldModel extends AbstractTableModel
     {
         private static final long       serialVersionUID = 1L;
-        private final String[]          columnNames      = { "MCP Name", "SRG Name", "Obf Name", "Comment" };
+        private final String[]          columnNames      = { "MCP名", "SRG名", "混淆名", "注释" };
         private final Class[]           columnTypes      = { String.class, String.class, String.class, String.class };
         private final boolean[]         isColumnEditable = { true, false, false, true };
         private final Object[][]        data;
