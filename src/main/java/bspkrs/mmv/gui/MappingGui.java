@@ -658,7 +658,7 @@ public class MappingGui extends JFrame
                 String imgsrc = MappingGui.class.getResource("/bspkrs/mmv/gui/icon/bspkrs.png").toString();
                 String year = new SimpleDateFormat("yyyy").format(new Date());
                 String message = "<center><img src=\"" + imgsrc + "\"/><br/>" +
-                        "MCP Mapping 查看器 v" + VERSION_NUMBER + "<br/>" +
+                        "MCP Mapping 查看器 v" + VERSION_NUMBER + "_cn<br/>" +
                         "Copyright (C) 2013-" + year + " bspkrs<br/>" +
                         "Portions Copyright (C) 2013 Alex \"immibis\" Campbell<br/><br/>" +
                         "作者: bspkrs<br/>" +
@@ -672,6 +672,7 @@ public class MappingGui extends JFrame
                         "<a href=\"https://raw.githubusercontent.com/kaaass/MCPMappingViewer_CN/master/LICENSE\">License</a><br/>" +
                         "<a href=\"https://raw.githubusercontent.com/google/gson/master/LICENSE\">GSON License</a><br/>" +
                         "<a href=\"https://twitter.com/bspkrs\">bspkrs的Twitter</a><br/>" +
+						"<a href=\"http://mirror.kaaass.net/mcp/\">MCP镜像服务器</a><br/>" +
                         "<a href=\"https://kaaass.net\">KAAAsS的主页</a></center>";
                 showHTMLDialog(MappingGui.this, message, "关于 MCP Mapping 查看器", JOptionPane.PLAIN_MESSAGE);
             }
